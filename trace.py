@@ -1,11 +1,5 @@
-import json
 import sys
 import scapy.all as scapy
-
-
-
-
-
 
 
 def traceRoute(target):
@@ -19,4 +13,3 @@ def traceRoute(target):
                 toAdd += str(snd.ttl)
             toAdd += ' ' + str(rcv.src)
             f.write(toAdd)
-
