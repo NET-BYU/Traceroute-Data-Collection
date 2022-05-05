@@ -1,14 +1,52 @@
+import subprocess
 import os
 import scapy.all as scapy
 
 
 def traceRoute(target):
+  p = subprocess.run(["traceroute", target, "-n", "-q", "1"], stdout=subprocess.PIPE, text=True)
+  
+  return ParseTraceRouteOutput(p)
 
-    ans, unans = scapy.sr(scapy.IP(dst=target, ttl=(1,21),id=scapy.RandShort())/scapy.TCP(flags=0x2), timeout=.5)
-    output = []
-    for snd,rcv in ans:
-        output.append(rcv.src)
-    return output
+
+
+
+def ParseTraceRouteOutput(input):
+
+  output = ""
+  traceroute = []
+  latency = []
+
+  splitter = input.stdout.split("\n")
+  del splitter[0]
+
+
+  for x in splitter:
+      x = x[4:len(x)]
+
+      if x == '':
+          continue
+        
+      if x == "*":
+          traceroute.append("*")
+          latency.append("*")
+      else:
+          smallSplitter = x.split(" ")
+          traceroute.append(smallSplitter[0])
+          latency.append(smallSplitter[2])
+
+
+  for x in traceroute:
+    output = output+x+", "
+  output = output[0:len(output)-2]
+  output = output + "\t"
+  
+  for x in latency:
+    output = output + x + ", "
+  output = output[0:len(output)-2]
+
+  return output
+
 
 
 def GetTTL(ip):
