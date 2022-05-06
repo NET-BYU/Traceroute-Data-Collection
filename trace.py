@@ -1,6 +1,5 @@
 import subprocess
 import os
-import scapy.all as scapy
 
 
 def traceRoute(target):
