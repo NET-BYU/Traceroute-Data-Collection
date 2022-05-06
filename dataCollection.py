@@ -1,9 +1,13 @@
 import time
+import os
 from trace import getData
 
 
-IPADR = ["8.8.8.8", "yahoo.com", "google.com", "firefox.com"]
+IPADR = ["128.187.112.26"]
 
+
+if not os.path.exists("./Outputs"):
+    os.makedirs("./Outputs")
 
 while True:
     for target in IPADR:
