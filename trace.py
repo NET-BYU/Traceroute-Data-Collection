@@ -5,7 +5,7 @@ import os
 
 def traceRoute(target):
     p = subprocess.run(
-        ["traceroute", target, "-n", "-q", "1"], stdout=subprocess.PIPE, text=True
+        ["traceroute", target, "-I", "-n", "-q", "1"], stdout=subprocess.PIPE, text=True
     )
     return ParseTraceRouteOutput(p)
 
