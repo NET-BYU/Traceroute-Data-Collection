@@ -3,7 +3,7 @@ import os
 from trace import getData
 
 
-IPADR = ["byu.edu"]
+IPADR = ["byu.edu", "97.117.140.93", "72.160.10.9"]
 
 
 if not os.path.exists("./Outputs"):
