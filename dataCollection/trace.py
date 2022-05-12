@@ -56,6 +56,25 @@ def GetTTL(ip):
     return -1
 
 
+def GetTime(ip):
+    result = os.popen("ping -c 1 " + ip).read()
+    time_at = result.find("time=")
+    if time_at >= 0:
+        time = result[time_at + 5 :]
+        time_at = time.find(" ")
+        if time_at > 0:
+            return time[:time_at]
+    return -1
+
+
 def getData(target):
-    output = str(time.time()) + "\t" + str(GetTTL(target)) + "\t" + traceRoute(target)
+    output = (
+        str(time.time())
+        + "\t"
+        + str(GetTTL(target))
+        + "\t"
+        + traceRoute(target)
+        + "\t"
+        + str(GetTime(target))
+    )
     return output
