@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 data = pd.read_csv(
-    "Outputs/136.36.62.167.txt",
+    "Outputs/72.160.10.9.txt",
     sep="\t",
     parse_dates=True,
     infer_datetime_format=True,
@@ -42,6 +42,9 @@ def graphPingLatency(list_of_latencys):
     fig, ax = plt.subplots()
 
     ax.plot(range_of_latency, depth, linewidth=2.0)
+    ax.set_title("Ping Latency")
+    ax.set_ylabel("Instances in Range")
+    ax.set_xlabel("Latency")
     plt.show()
 
 
@@ -67,7 +70,9 @@ def graphTraceroute(list_of_traceroutes):
     fig, ax = plt.subplots()
 
     ax.bar(x, y, width=1, edgecolor="white", linewidth=1)
-
+    ax.set_title("Unique IP Addresses Across Multiple Traceroutes")
+    ax.set_xlabel("Distance From Source")
+    ax.set_ylabel("Number of Unique IP Addresses")
     plt.show()
 
 
