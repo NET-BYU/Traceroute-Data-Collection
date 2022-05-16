@@ -2,9 +2,13 @@ import pandas as pd
 import numpy as np
 import graph
 import matplotlib.pyplot as plt
+import json
+
+with open("Input.json", "r") as input_file:
+    IPADR = json.load(input_file)
 
 data = pd.read_csv(
-    "Outputs/byu.edu.txt",
+    f"Outputs/{IPADR[0]}.txt",
     sep="\t",
     parse_dates=True,
     infer_datetime_format=True,

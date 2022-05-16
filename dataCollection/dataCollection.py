@@ -2,26 +2,18 @@ import time
 import os
 from trace import getData
 import sentry_sdk
+import json
 
-sentry_sdk.init(
-    "https://2fbbdb1dd9ce4472853649ed421fca5f@o1245655.ingest.sentry.io/6402901",
-    # Set traces_sample_rate to 1.0 to capture 100%
-    # of transactions for performance monitoring.
-    # We recommend adjusting this value in production.
-    traces_sample_rate=1.0,
-)
+# sentry_sdk.init(
+#     "https://2fbbdb1dd9ce4472853649ed421fca5f@o1245655.ingest.sentry.io/6402901",
+#     # Set traces_sample_rate to 1.0 to capture 100%
+#     # of transactions for performance monitoring.
+#     # We recommend adjusting this value in production.
+#     traces_sample_rate=1.0,
+# )
 
-
-IPADR = [
-    "byu.edu",
-    "136.36.62.167",
-    "76.8.213.221",
-    "97.117.140.93",
-    "72.160.10.9",
-    "75.174.31.107",
-    "69.73.60.141",
-]
-
+with open("Input.json", "r") as input_file:
+    IPADR = json.load(input_file)
 
 if not os.path.exists("./Outputs"):
     os.makedirs("./Outputs")
