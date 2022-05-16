@@ -3,7 +3,7 @@ import numpy as np
 import matplotlib.pyplot as plt
 
 data = pd.read_csv(
-    "Outputs/72.160.10.9.txt",
+    "Outputs/byu.edu.txt",
     sep="\t",
     parse_dates=True,
     infer_datetime_format=True,
@@ -20,28 +20,8 @@ def graphPingLatency(list_of_latencys):
     array_of_latency = np.array(list_of_latencys)
     array_of_latency = np.sort(array_of_latency)
 
-    range_of_latency = np.arange(
-        array_of_latency[0], array_of_latency[array_of_latency.size - 1], 0.07
-    )
-
-    depth = np.array([])
-
-    for x in range_of_latency:
-        depth = np.append(depth, 0)
-
-    for latency in array_of_latency:
-        for x in range(depth.size):
-            if (latency < range_of_latency[x]) | np.isclose(
-                latency, range_of_latency[x]
-            ):
-                depth[x] = depth[x] + 1
-                break
-        if latency > range_of_latency[range_of_latency.size - 1]:
-            depth[depth.size - 1] += 1
-
     fig, ax = plt.subplots()
-
-    ax.plot(range_of_latency, depth, linewidth=2.0)
+    plt.hist(array_of_latency, bins=100)
     ax.set_title("Ping Latency")
     ax.set_ylabel("Instances in Range")
     ax.set_xlabel("Latency")
