@@ -4,13 +4,13 @@ from trace import getData
 import sentry_sdk
 import json
 
-# sentry_sdk.init(
-#     "https://2fbbdb1dd9ce4472853649ed421fca5f@o1245655.ingest.sentry.io/6402901",
-#     # Set traces_sample_rate to 1.0 to capture 100%
-#     # of transactions for performance monitoring.
-#     # We recommend adjusting this value in production.
-#     traces_sample_rate=1.0,
-# )
+sentry_sdk.init(
+    "https://2fbbdb1dd9ce4472853649ed421fca5f@o1245655.ingest.sentry.io/6402901",
+    # Set traces_sample_rate to 1.0 to capture 100%
+    # of transactions for performance monitoring.
+    # We recommend adjusting this value in production.
+    traces_sample_rate=1.0,
+)
 
 with open("Input.json", "r") as input_file:
     IPADR = json.load(input_file)
