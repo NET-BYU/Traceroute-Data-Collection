@@ -3,6 +3,12 @@ import numpy as np
 import graph
 import matplotlib.pyplot as plt
 import json
+import os
+
+if not os.path.exists("./Outputs"):
+    os.makedirs("./Outputs")
+if not os.path.exists("./Outputs/Graphs"):
+    os.makedirs("./Outputs/Graphs")
 
 with open("Input.json", "r") as input_file:
     IPADR = json.load(input_file)
@@ -20,5 +26,10 @@ for target in IPADR:
     data["Traceroute"] = data["Traceroute"].str.split(" ")
     data["Delay"] = data["Delay"].str.split(" ")
 
-    graph.Traceroute(data["Traceroute"])
-    graph.PingLatency(data["Latency"])
+    fig, ax = plt.subplots(2, figsize=(11, 10))
+    fig.canvas.manager.set_window_title(f"{target}")
+    plt.subplots_adjust(hspace=0.7)
+
+    graph.Traceroute(data["Traceroute"], ax[0])
+    graph.PingLatency(data["Latency"], ax[1])
+    plt.savefig(f"./Outputs/Graphs/{target}.pdf")
