@@ -25,6 +25,12 @@ for target in IPADR:
     data.index = pd.to_datetime((data.index.values * 1e9).astype(int))
     data["Traceroute"] = data["Traceroute"].str.split(" ")
     data["Delay"] = data["Delay"].str.split(" ")
+    for stuff in data["Traceroute"]:
+        while True:
+            try:
+                stuff.remove("")
+            except:
+                break
 
     fig, ax = plt.subplots(3, figsize=(11, 10))
     fig.canvas.manager.set_window_title(f"{target}")
