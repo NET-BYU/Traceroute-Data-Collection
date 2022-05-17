@@ -15,10 +15,6 @@ def PingLatency(list_of_latencys, ax):
     ax.set_xlabel("Latency")
 
 
-def TracerouteStep(x, y, ax):
-    ax.bar(x, y)
-
-
 def Traceroute(list_of_traceroutes, ax, target):
     comprehensive_list_of_traceroutes = []
     comprehensive_ammount_of_traceroutes = []
@@ -56,6 +52,14 @@ def Traceroute(list_of_traceroutes, ax, target):
     ax.set_xlabel("Distance From Source")
     ax.set_ylabel("Number of Unique IP Addresses")
 
+    TracerouteSteps(
+        comprehensive_ammount_of_traceroutes, comprehensive_list_of_traceroutes, target
+    )
+
+
+def TracerouteSteps(
+    comprehensive_ammount_of_traceroutes, comprehensive_list_of_traceroutes, target
+):
     row = 5
     if int(len(comprehensive_ammount_of_traceroutes) / row) == (
         len(comprehensive_ammount_of_traceroutes) / row
@@ -67,10 +71,9 @@ def Traceroute(list_of_traceroutes, ax, target):
     figure, axis = plt.subplots(row, collum, figsize=(40, 20))
 
     for index in range(len(comprehensive_list_of_traceroutes)):
-        TracerouteStep(
+        axis[(index) % row][int((index) / row)].bar(
             comprehensive_list_of_traceroutes[index],
             comprehensive_ammount_of_traceroutes[index],
-            axis[(index) % row][int((index) / row)],
         )
     plt.subplots_adjust(hspace=0.08, left=0.03, right=0.99, bottom=0.03)
     figure.canvas.manager.set_window_title(f"{target}_traceroute_step")
