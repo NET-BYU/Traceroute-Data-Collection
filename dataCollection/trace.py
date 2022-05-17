@@ -15,6 +15,7 @@ def ParseTraceRouteOutput(input):
     output = ""
     traceroute = []
     latency = []
+    seperator_char = " "
 
     splitter = input.stdout.split("\n")
     del splitter[0]
@@ -34,13 +35,15 @@ def ParseTraceRouteOutput(input):
             latency.append(smallSplitter[2])
 
     for x in traceroute:
-        output = output + x + " "
-    output = output[0 : len(output) - 2]
+        output = output + x + seperator_char
+    while output[len(output) - 1] == seperator_char:
+        output = output[0 : len(output) - 2]
     output = output + "\t"
 
     for x in latency:
-        output = output + x + " "
-    output = output[0 : len(output) - 2]
+        output = output + x + seperator_char
+    while output[len(output) - 1] == seperator_char:
+        output = output[0 : len(output) - 2]
 
     return output
 
