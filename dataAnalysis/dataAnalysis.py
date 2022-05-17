@@ -26,10 +26,11 @@ for target in IPADR:
     data["Traceroute"] = data["Traceroute"].str.split(" ")
     data["Delay"] = data["Delay"].str.split(" ")
 
-    fig, ax = plt.subplots(2, figsize=(11, 10))
+    fig, ax = plt.subplots(3, figsize=(11, 10))
     fig.canvas.manager.set_window_title(f"{target}")
-    plt.subplots_adjust(hspace=0.7)
+    fig.subplots_adjust(hspace=0.7)
 
-    graph.Traceroute(data["Traceroute"], ax[0])
-    graph.PingLatency(data["Latency"], ax[1])
-    plt.savefig(f"./Outputs/Graphs/{target}.pdf")
+    graph.TracerouteLength(data["Traceroute"], ax[1])
+    graph.PingLatency(data["Latency"], ax[2])
+    graph.Traceroute(data["Traceroute"], ax[0], target)
+    fig.savefig(f"./Outputs/Graphs/{target}.pdf")
