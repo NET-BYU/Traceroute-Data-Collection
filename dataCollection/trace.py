@@ -36,14 +36,12 @@ def ParseTraceRouteOutput(input):
 
     for x in traceroute:
         output = output + x + seperator_char
-    while output[len(output) - 1] == seperator_char:
-        output = output[0 : len(output) - 2]
+    output = output.strip(seperator_char)
     output = output + "\t"
 
     for x in latency:
         output = output + x + seperator_char
-    while output[len(output) - 1] == seperator_char:
-        output = output[0 : len(output) - 2]
+    output = output.strip(seperator_char)
 
     return output
 
