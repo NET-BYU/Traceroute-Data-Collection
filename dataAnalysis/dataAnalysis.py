@@ -37,7 +37,6 @@ for target in IPADR:
                 stuff.remove("")
             except:
                 break
-        print(stuff)
 
     fig, ax = plt.subplots(3, figsize=(11, 10))
     fig.canvas.manager.set_window_title(f"{target}")
