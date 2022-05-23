@@ -41,8 +41,11 @@ for target in IPADR:
     fig, ax = plt.subplots(3, figsize=(11, 10))
     fig.canvas.manager.set_window_title(f"{target}")
     fig.subplots_adjust(hspace=0.7)
-
-    graph.TracerouteLength(data["Traceroute"], ax[1])
-    graph.PingLatency(data["Latency"], ax[2])
-    graph.Traceroute(data["Traceroute"], ax[0], target)
-    fig.savefig(f"./Outputs/Graphs/{target}.pdf")
+    try:
+        graph.TracerouteLength(data["Traceroute"], ax[1])
+        graph.PingLatency(data["Latency"], ax[2])
+        graph.Traceroute(data["Traceroute"], ax[0], target)
+        fig.savefig(f"./Outputs/Graphs/{target}.pdf")
+        print("Graphed:", target)
+    except:
+        print("Error:", target)
