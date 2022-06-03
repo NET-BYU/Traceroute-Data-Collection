@@ -23,7 +23,7 @@ class Trusted:
         """Store trusted information to referance later"""
         for index in range(len(data[2])):
 
-            # stores the IP Address'
+            """stores the IP Address'"""
             IP_value = [data[0], data[3][index]]
             if (len(self.list_IP) - 1) < index:
                 self.list_IP.append({data[2][index]: [IP_value]})
@@ -33,7 +33,7 @@ class Trusted:
             else:
                 self.list_IP[index][data[2][index]] = [IP_value]
 
-            # stores the latency data
+            """stores the latency data"""
             if data[3][index] == "*":
                 latency_value = -1
                 if len(self.list_Latency) - 1 < index:
@@ -50,7 +50,7 @@ class Trusted:
             elif self.list_Latency[index][1] < latency_value:
                 self.list_Latency[index][1] = latency_value
 
-            # Checks if the rest are stars, if they are stop
+            """Checks if the rest are stars, if they are stop"""
             if data[2][index] == "*":
                 if self.stars(data[2][index:]):
                     data[2] = data[2][:index]
@@ -67,12 +67,16 @@ class Trusted:
         IP_score = 0
         latency_score = 0
         for index in range(len(data[2])):
+            """Checks if the IP address has been seen before"""
             if (len(self.list_IP) - 1) < index:
                 continue
 
             if data[2][index] in self.list_IP[index]:
                 IP_score += 1
+            if data[2][index] in self.list_IP:
+                IP_score += 1
 
+            """Checks if the current latency is within an acceptable range"""
             if data[3][index] == "*":
                 latency_value = -1
             else:
@@ -88,10 +92,12 @@ class Trusted:
                         data[2] = data[2][: index + 1]
                         data[3] = data[3][: index + 1]
                     break
+            else:
+                pass
 
         if self.pass_or_fail(IP_score, latency_score, len(data[2])):
             self.build_list(data)
-            self.clean_old_data(data[0])
+            # self.clean_old_data(data[0])
         return self.pass_or_fail(IP_score, latency_score, len(data[2]))
 
     def clean_old_data(self, time):
