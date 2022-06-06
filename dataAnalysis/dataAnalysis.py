@@ -47,5 +47,6 @@ for target in IPADR:
         graph.Traceroute(data["Traceroute"], ax[0], target)
         fig.savefig(f"./Outputs/Graphs/{target}.pdf")
         print("Graphed:", target)
+        plt.close()
     except:
         print("Error:", target)
