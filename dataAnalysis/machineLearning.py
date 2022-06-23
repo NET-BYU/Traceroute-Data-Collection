@@ -1,51 +1,70 @@
 from sklearn.ensemble import RandomForestClassifier
+import pandas as pd
+import numpy as np
+import graph
+import matplotlib.pyplot as plt
+import json
+import os
 
 
-with open("Outputs/76.8.213.221.txt") as input_file:
-    total_data = []
-    for index, input_line in enumerate(input_file):
-        output = []
-        try:
-            input_line = input_line.strip()
-        except:
+if not os.path.exists("./Outputs"):
+    os.makedirs("./Outputs")
+if not os.path.exists("./Outputs/Graphs"):
+    os.makedirs("./Outputs/Graphs")
+random_list = ["a", "b"]
+with open("Input.json", "r") as input_file:
+    IPADR = json.load(input_file)
+for target in IPADR:
+
+    data = pd.read_csv(
+        f"Outputs/{target}.txt",
+        sep="\t",
+        parse_dates=True,
+        infer_datetime_format=True,
+        # index_col=0,
+        names=["Time", "TTL", "Traceroute", "Delay", "Latency"],
+    )
+    print(data.head())
+
+    del data["Latency"]
+    del data["Time"]
+    data["Traceroute"] = data["Traceroute"].str.split(" ")
+    data["Delay"] = data["Delay"].str.split(" ")
+
+    for index in data.index:
+        while True:
+            try:
+                data.loc[index, "Traceroute"].remove("*")
+            except:
+                break
+        # print(type(data.loc[index, "Traceroute"]))
+        if (
+            type(data.loc[index, "Traceroute"]) == type(random_list)
+            and len(data.loc[index, "Traceroute"]) > 5
+        ):
+            reduced_traceroute = data.loc[index, "Traceroute"][-5:]
+            del data.loc[index, "Traceroute"][0:]
+            for ip in reduced_traceroute:
+                broken_ip = ip.split(".")
+                for individual_ip in broken_ip:
+                    data.loc[index, "Traceroute"].append(individual_ip)
+        else:
+            print(f"Error at line {index}")
             pass
-        input_data = input_line.split("\t")
 
-        output.append(input_data[1])
-
-        input_data[2] = input_data[2].split(" ")
         while True:
             try:
-                input_data[2].remove("")
+                data.loc[index, "Delay"].remove("*")
             except:
                 break
+        if (
+            type(data.loc[index, "Delay"]) == type(random_list)
+            and len(data.loc[index, "Delay"]) > 5
+        ):
+            reduced_delay = data.loc[index, "Delay"][-5:]
+            del data.loc[index, "Delay"][0:]
+            for delay in reduced_delay:
+                data.loc[index, "Delay"].append(delay)
 
-        output.append(len(input_data[2]))
-
-        while True:
-            try:
-                input_data[2].remove("*")
-            except:
-                break
-
-        for x in range(len(input_data[2]) - 5, len(input_data[2])):
-            temp = input_data[2][x].split(".")
-            for y in temp:
-                output.append(y)
-
-        input_data[3] = input_data[3].split(" ")
-        while True:
-            try:
-                input_data[3].remove("")
-            except:
-                try:
-                    input_data[3].remove("*")
-                except:
-                    break
-        for x in range(len(input_data[3]) - 5, len(input_data[3])):
-            output.append(input_data[3][x])
-        # print(output)
-        total_data.append(output)
-        if index > 10:
-            break
-print(total_data)
+    print(data.head())
+    break
