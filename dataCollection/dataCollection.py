@@ -1,3 +1,7 @@
+# Pings then traceroutes to each IP address in Input.json everyt 10 minutes
+# Saves the traceroute data, the delay of each trace in that route, the TTL of the ping, and the delay of the ping
+# Stores the saved data in a .txt file named after the IP address
+
 import time
 import os
 from trace import getData
