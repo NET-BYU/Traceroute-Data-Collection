@@ -67,9 +67,10 @@ def parse_data(target):
             while len(data.loc[index, "Traceroute"]) < 20:
                 data.loc[index, "Traceroute"].append(-1.0)
         else:
-            print(f"Error at line {index} at {target}.txt")
-            del data.loc[index, "Traceroute"][0:]
-            data.drop(index, axis=0)
+            # print(f"Error at line {index} at {target}.txt")
+            data.loc[index, "Traceroute"] = [-1.0]
+            while len(data.loc[index, "Traceroute"]) < 20:
+                data.loc[index, "Traceroute"].append(-1.0)
 
             # This takes the last 5 delay values and appends them to "Traceroute"
         if (
@@ -163,65 +164,61 @@ def inline(array, length, percent):
     return X_train, X_test, y_train, y_test
 
 
-initial_good_data = IPADR[0]
-print(f"Testing {initial_good_data}.txt")
-training_data = [initial_good_data]
-false_test = []
-for i in IPADR:
-    if i in training_data:
-        continue
-    if len(training_data) < 7:
-        training_data.append(i)
-    else:
-        if len(false_test) == 0:
-            false_test = add_identifier(parse_data(i), False)
-        else:
-            false_test = pd.concat(
-                [false_test, add_identifier(parse_data(i), False)],
-                ignore_index=True,
-            )
-for i in range(len(training_data)):
-    training_data[i] = parse_data(training_data[i])
-
-x = 0
-for i in training_data[0]["Traceroute"]:
-    x += 1
-    try:
-        if len(i) != 26:
-            print(f"line: {x}\n{len(i)}: {i}")
-    except:
-        print("TypeError: object of type 'float' has no len()", i, "line:", x)
-
+data = []
 good_data = 30
-X_train, X_test, y_train, y_test = inline(training_data, good_data, 1)
-X_train = X_train.to_list()
-y_train = y_train.to_list()
-X_test = X_test.to_list()
-y_test = y_test.to_list()
+bad_data_percent = 1
 
-sc = StandardScaler()
-X_train = sc.fit_transform(X_train)
-X_test = sc.transform(X_test)
 
-rfc = RandomForestClassifier(n_estimators=200)
-rfc.fit(X_train, y_train)
-pred_rfc = rfc.predict(X_test)
+print("Data set:", IPADR)
+print(f"Training data: good-{good_data}, bad-{good_data}\n")
 
-print(
-    f"Training data: good-{good_data}, bad-{len(X_train) - good_data}, total-{len(X_train)}"
-)
-print(f"Testing data: {len(X_test)}")
-print("Accuracy:", accuracy_score(y_test, pred_rfc))
-print(classification_report(y_test, pred_rfc))
+for i in IPADR:
+    data.append(parse_data(i))
 
-# testing false data the algorith wasn't trained on
 
-false_test_X = false_test["Traceroute"]
-false_test_y = false_test["Correct"]
+for true_data in range(len(data)):
+    print(f"\n\n\nTesting {IPADR[true_data]}.txt")
+    training_data = []
+    extra_testing_data = []
+    for i in range(len(data)):
+        if (i == training_data) or (len(training_data) < int(len(IPADR) / 2)):
+            training_data.append(data[i])
+        else:
+            if len(extra_testing_data) == 0:
+                extra_testing_data = add_identifier(data[i], 0)
+            else:
+                extra_testing_data = pd.concat(
+                    [extra_testing_data, add_identifier(data[i], 0)],
+                    ignore_index=True,
+                )
 
-X_test = sc.transform(false_test_X.to_list())
-pred_rfc = rfc.predict(X_test)
+    X_train, X_test, y_train, y_test = inline(
+        training_data, good_data, bad_data_percent
+    )
+    X_train = X_train.to_list()
+    y_train = y_train.to_list()
+    X_test = X_test.to_list()
+    y_test = y_test.to_list()
 
-print(f"\n\nFalse untrained data: {len(false_test_X)}")
-print("Accuracy:", accuracy_score(false_test_y, pred_rfc))
-print(classification_report(false_test_y, pred_rfc))
+    sc = StandardScaler()
+    X_train = sc.fit_transform(X_train)
+    X_test = sc.transform(X_test)
+
+    rfc = RandomForestClassifier(n_estimators=30)
+    rfc.fit(X_train, y_train)
+    pred_rfc = rfc.predict(X_test)
+
+    print(f"\tTesting data: {len(X_test)}")
+    print("\tAccuracy:", accuracy_score(y_test, pred_rfc))
+    print(classification_report(y_test, pred_rfc))
+
+    # testing false data the algorith wasn't trained on
+    # false_test_X = extra_testing_data["Traceroute"]
+    # false_test_y = extra_testing_data["Correct"]
+
+    # X_test = sc.transform(false_test_X.to_list())
+    # pred_rfc = rfc.predict(X_test)
+
+    # print(f"\tFalse untrained data: {len(false_test_X)}")
+    # print("\tAccuracy:", accuracy_score(false_test_y, pred_rfc))
+    # print(classification_report(false_test_y, pred_rfc, zero_division=0))
