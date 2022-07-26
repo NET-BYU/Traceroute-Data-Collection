@@ -164,16 +164,13 @@ def inline(array, length, percent):
     return X_train, X_test, y_train, y_test
 
 
-data = []
+data = [parse_data(i) for i in IPADR]
 good_data = 30
 bad_data_percent = 1
 
 
 print("Data set:", IPADR)
 print(f"Training data: good-{good_data}, bad-{good_data}\n")
-
-for i in IPADR:
-    data.append(parse_data(i))
 
 
 for true_data in range(len(data)):
