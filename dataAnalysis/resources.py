@@ -1,11 +1,12 @@
+from venv import create
 import pandas as pd
 import numpy as np
 import json
 import os
+import time
 
 
 def parse_data(target):
-    # print(target)
     random_list = ["a", "b"]
     # Takes the data from a txt file and parses it into a pandas dataframe in a way that will be recognizable by the machine learning algorithm
 
@@ -44,7 +45,6 @@ def parse_data(target):
             del data.loc[index, "Traceroute"][0:]
 
             # This takes the IP addresses from the ["x.x.x.x", "x.x.x.x"] notation and replaces it with ["x.x.x",  "x.x.x"]
-            # print(data.loc[index, "Traceroute"])
             for ip in range(len(reduced_traceroute)):
                 broken_ip = reduced_traceroute[ip].split(".")
                 while True:
@@ -91,6 +91,8 @@ def parse_data(target):
 
 
 def create_check(output):
+    # Takes a list of true inputs and condences them into a dataframe of unique IP addresses and normal distribution of the delays
+    # Format of verify_check [[[Array of IP Addresses], ... , ['66.219.236']], [[standard deveation, mean], ... , [0.826255166398371, 26.4456]]]
     verify_check = [[], [], []]
     for i in output.index:
         for j in range(len(output.loc[i, "Traceroute"])):
@@ -114,6 +116,7 @@ def create_check(output):
 
 
 def initialize(start, end, data):
+    # Assumes all of the values in data[start : end] are true values and uses them to create the first intance of verify_check and verified_data
     column_user = list(data)
     output = pd.DataFrame(
         np.zeros(((end - start), len(column_user))), dtype=str, columns=column_user
@@ -124,25 +127,31 @@ def initialize(start, end, data):
 
 
 def verify(data, verify_check):
-    score = 0
+    traceroute_score = 0.0
+    delay_score = 0.0
     if len(data["Traceroute"]) <= len(verify_check[0]):
         for i in range(len(data["Traceroute"])):
             # print('data["Traceroute_data"][i]', data["Traceroute"][i])
             # print("verify_check[0][i]", verify_check[0][i])
-            if data["Traceroute"][i] in verify_check[0][i]:
-                score += 2
-            elif data["Traceroute"][i] in verify_check[0]:
-                score += 1
+            if data.iat[0, 0][i] in verify_check[0][i]:
+                traceroute_score += 2
+            elif data.iat[0, 0][i] in verify_check[0]:
+                traceroute_score += 1
     else:
         for i in range(len(verify_check[0])):
             # print('data["Traceroute_data"][i]', data["Traceroute"][i])
             # print("verify_check[0][i]", verify_check[0][i])
-            if data["Traceroute"][i] in verify_check[0][i]:
-                score += 2
-            elif data["Traceroute"][i] in verify_check[0]:
-                score += 1
-
-    if score >= len(data) * 1.75:
+            if data.iat[0, 0][i] in verify_check[0][i]:
+                traceroute_score += 1
+            elif data.iat[0, 0][i] in verify_check[0]:
+                traceroute_score += 0.5
+    for i in range(len(data.iat[0, 1])):
+        if data.iat[0, 1][i] >= (
+            verify_check[1][i][1] - 2 * verify_check[1][i][0]
+        ) and data.iat[0, 1][i] <= (verify_check[1][i][1] + 2 * verify_check[1][i][0]):
+            delay_score += 1
+    total_score = (traceroute_score / len(data)) * 0.6 + (delay_score / len(data)) * 0.4
+    if total_score >= 0.75:
         # print("True", score)
         return True
     else:
@@ -161,19 +170,23 @@ def test(data):
         # print("True:", score)
         return True
     else:
-        print("False")
+        # print("False")
         return False
 
 
-def updata_variables(new_data, identified_data, verified_data, verify_check):
-    temp = pd.DataFrame(
-        [
-            [
-                new_data["Traceroute"],
-                new_data["Delay"],
-                verify(new_data, verify_check),
-            ]
-        ],
-        columns=["Traceroute", "Delay", "Truth"],
-    )
-    return new_data, identified_data, verified_data, verify_check
+def update_variables(new_data, identified_data, verified_data, verify_check):
+    new_data["Truth"] = verify(new_data, verify_check)
+    identified_data = pd.concat([identified_data, new_data], ignore_index=True)
+    if len(identified_data) >= 50:
+        if identified_data.iat[0, 2]:
+            verified_data = pd.concat(
+                [
+                    verified_data,
+                    identified_data.take([0], axis=0).drop("Truth", axis=1),
+                ],
+                ignore_index=True,
+            )
+            verified_data = verified_data.drop(0, axis=0)
+            verify_check = create_check(verified_data)
+        identified_data = identified_data.drop(0, axis=0)
+    return identified_data, verified_data, verify_check
