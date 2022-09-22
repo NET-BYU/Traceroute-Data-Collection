@@ -1,3 +1,4 @@
+import numbers
 from venv import create
 import pandas as pd
 import numpy as np
@@ -129,54 +130,98 @@ def initialize(start, end, data):
 def verify(data, verify_check):
     traceroute_score = 0.0
     delay_score = 0.0
-    if len(data["Traceroute"]) <= len(verify_check[0]):
-        for i in range(len(data["Traceroute"])):
-            # print('data["Traceroute_data"][i]', data["Traceroute"][i])
-            # print("verify_check[0][i]", verify_check[0][i])
-            if data.iat[0, 0][i] in verify_check[0][i]:
-                traceroute_score += 2
-            elif data.iat[0, 0][i] in verify_check[0]:
-                traceroute_score += 1
-    else:
-        for i in range(len(verify_check[0])):
-            # print('data["Traceroute_data"][i]', data["Traceroute"][i])
-            # print("verify_check[0][i]", verify_check[0][i])
-            if data.iat[0, 0][i] in verify_check[0][i]:
-                traceroute_score += 1
-            elif data.iat[0, 0][i] in verify_check[0]:
-                traceroute_score += 0.5
-    for i in range(len(data.iat[0, 1])):
-        if data.iat[0, 1][i] >= (
-            verify_check[1][i][1] - 2 * verify_check[1][i][0]
-        ) and data.iat[0, 1][i] <= (verify_check[1][i][1] + 2 * verify_check[1][i][0]):
-            delay_score += 1
+    try:
+        try:
+            # finds the shortest list to itterate through so there is no out of bounds errors
+            if len(data["Traceroute"]) <= len(verify_check[0]):
+                try:
+                    for i in range(len(data["Traceroute"])):
+                        # Checks every datapoint in Traceroute to see if it is in verify check. If it is in the exact same place, give it a higher score
+                        try:
+                            if data.iat[0, 0][i] in verify_check[0][i]:
+                                traceroute_score += 2
+                            elif data.iat[0, 0][i] in verify_check[0]:
+                                traceroute_score += 1
+                        except:
+                            print("Error accessing data")
+                            print("\tdata.iat[0, 0][i]")
+                            print("\t", data.iat[0, 0][i])
+                            return "One"
+                except:
+                    print("Error in the first for loop")
+        except:
+            print("Error in first if statement")
+            return "One"
+        else:
+            for i in range(len(verify_check[0])):
+                # Does the same thing as the if statement, just not going out of bounds. I am not convinced this redundancy is nessisary, however I put it in here because I was having problems
+                try:
+                    if data.iat[0, 0][i] in verify_check[0][i]:
+                        traceroute_score += 1
+                    elif data.iat[0, 0][i] in verify_check[0]:
+                        traceroute_score += 0.5
+                except:
+                    print("Error accessing data in else")
+                    print("\tdata.iat[0, 0] i =", i)
+                    print("\t", data)
+                    print("\tverify_check[0][i]")
+                    print("\t", verify_check[0])
+                    return "One"
+    except:
+        print("Error comparing traceroute data")
+        return "One"  # Whenever I return something weird here, it is to triger an error where this is called so it will exit the for loop and continue on it's merry way. This is specifically because I was having troubles finding where my error messages were coming from
+    try:
+        # Checks to see if the delay we have gotten is within 2 standard deveations of the verify_check data
+        # Once again there is the length redudnancy because I am having mysterious errors sometimes
+        if len(data["Delay"]) <= len(verify_check[1]):
+            for i in range(len(data.iat[0, 1])):
+                if data.iat[0, 1][i] >= (
+                    verify_check[1][i][1] - 2 * verify_check[1][i][0]
+                ) and data.iat[0, 1][i] <= (
+                    verify_check[1][i][1] + 2 * verify_check[1][i][0]
+                ):
+                    delay_score += 1
+        else:
+            for i in range(len(verify_check[1])):
+                if data.iat[0, 1][i] >= (
+                    verify_check[1][i][1] - 2 * verify_check[1][i][0]
+                ) and data.iat[0, 1][i] <= (
+                    verify_check[1][i][1] + 2 * verify_check[1][i][0]
+                ):
+                    delay_score += 1
+    except:
+        print("Error comparing delay data")
+        return "Two"
     total_score = (traceroute_score / len(data)) * 0.6 + (delay_score / len(data)) * 0.4
     if total_score >= 0.75:
-        # print("True", score)
         return True
     else:
-        # print("False", score)
         return False
 
 
 def test(data):
+    # If more than 75% of the data is true than return true
     score = 0
-    # print("\n\n\tdata:\n", data)
-    # print("\tfirst index:")
     for i in data.index:
         if data.loc[i, "Truth"]:
             score += 1
     if score / len(data) > 0.75:
-        # print("True:", score)
         return True
     else:
-        # print("False")
         return False
 
 
 def update_variables(new_data, identified_data, verified_data, verify_check):
-    new_data["Truth"] = verify(new_data, verify_check)
+    try:
+        # Checks to see if the new data it true or not
+        new_data["Truth"] = verify(new_data, verify_check)
+    except:
+        # Returns an invalid output so it will triger the try catch variable in the main code
+        print("Error verifying at:")
+        return 0
+    # Adds the newly identifed data to the end of identified_data
     identified_data = pd.concat([identified_data, new_data], ignore_index=True)
+    # Wait for the buffer to be 50 and then pop the first datapoint in identifed_data. If it is good data then append it to verifyed_data, otherwise get rid of it
     if len(identified_data) >= 50:
         if identified_data.iat[0, 2]:
             verified_data = pd.concat(
