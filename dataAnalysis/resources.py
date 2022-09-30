@@ -42,6 +42,8 @@ def parse_data(target):
             if len(data.loc[index, "Traceroute"]) > 5:
                 reduced_traceroute = data.loc[index, "Traceroute"][-5:]
             else:
+                while len(data.loc[index, "Traceroute"]) < 5:
+                    data.loc[index, "Traceroute"].append("0.0.0.0")
                 reduced_traceroute = data.loc[index, "Traceroute"][0:]
             del data.loc[index, "Traceroute"][0:]
 
@@ -77,8 +79,11 @@ def parse_data(target):
 
             if len(data.loc[index, "Delay"]) >= 5:
                 reduced_delay = data.loc[index, "Delay"][-5:]
+            # This ensures that even if something wonkey happens with the traceroute and we don't get the amount of data that we expect, there is still 5 numbers in the array
             else:
-                reduced_delay = data.loc[index, "Delay"][0:]
+                while len(data.loc[index, "Delay"]) < 5:
+                    data.loc[index, "Delay"].append("0.0")
+                reduced_delay = data.loc[index, "Delay"]
             del data.loc[index, "Delay"][0:]
 
             for delay in reduced_delay:
@@ -107,7 +112,7 @@ def create_check(output):
                     if not output.loc[i, "Traceroute"][j] in verify_check[0][j]:
                         verify_check[0][j].append(output.loc[i, "Traceroute"][j])
             except:
-                print("Error of some kind")
+                print("Error of some kind inside of create_check")
                 verify_check[0][j].append("0.0.0")
     for i in range(len(verify_check[2])):
         verify_check[1].append([np.std(verify_check[2][i])])
