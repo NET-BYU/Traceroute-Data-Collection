@@ -39,18 +39,16 @@ for true_dataframe in range(len(data)):
 
     # itterates through every line of data after [end] in the IP address, keeping a buffer of 50 datapoints that are known to be correct as well as a buffer of 50 tested variables who's truth is averaged and used to determine if an error should be sent or not
     for j in data[true_dataframe][end + 1 :].index:
-        try:
-            # Tests the next datapoint and appends it to the end of identified_data. Pops off the first data point of identified_data and if it was previously determined to be true it appends it to the end of verified_data and pops off the first datapoint
-            identified_data, verified_data, verify_check = update_variables(
-                data[true_dataframe].take([j], axis=0),
-                identified_data,
-                verified_data,
-                verify_check,
-            )
-        except:
-            print("Error at line:", j)
-            total_errors += 1
-            continue
+        # Tests the next datapoint and appends it to the end of identified_data. Pops off the first data point of identified_data and if it was previously determined to be true it appends it to the end of verified_data and pops off the first datapoint
+        identified_data, verified_data, verify_check = update_variables(
+            data[true_dataframe].take([j], axis=0),
+            identified_data,
+            verified_data,
+            verify_check,
+        )
+        # print("Error at line:", j)
+        # total_errors += 1
+        # continue
         # Test returns true if more than 75% of the datapoints in identified_data were previously determined to be true
         current_test = test(identified_data)
         if current_test:
@@ -83,16 +81,25 @@ for true_dataframe in range(len(data)):
             # itterates through every line in the IP address in the same way as before
             for j in data[false_dataframe][end + 1 :].index:
                 try:
-                    identified_data, verified_data, verify_check = update_variables(
-                        data[false_dataframe].take([j], axis=0),
-                        identified_data,
-                        verified_data,
-                        verify_check,
-                    )
+                    data[false_dataframe].take([j], axis=0)
                 except:
-                    print("\t\tline:", j)
-                    total_errors += 1
-                    continue
+                    print("Dataframe")
+                    print(data[false_dataframe])
+                    print(
+                        "if this doesn't print it's false_dataframe that is out of bounds, not j. Which would make a lot of sense. but also not"
+                    )
+                    print(f"length of dataframe = {len(data[false_dataframe])}")
+                    print(f"\nj = {j}\n\n")
+                identified_data, verified_data, verify_check = update_variables(
+                    data[false_dataframe].take([j], axis=0),
+                    identified_data,
+                    verified_data,
+                    verify_check,
+                )
+                # except:
+                #     print("\t\tline:", j)
+                #     total_errors += 1
+                #     continue
                 current_test = test(identified_data)
                 if current_test:
                     total_true += 1

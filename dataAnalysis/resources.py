@@ -93,6 +93,8 @@ def parse_data(target):
             print(f"Error at line {index} at {target}.txt")
             row_to_drop.append(index)
     data = data.drop(row_to_drop, axis=0)
+    data = data.reset_index(drop=True)
+    print(data)
     return data
 
 
@@ -102,18 +104,22 @@ def create_check(output):
     verify_check = [[], [], []]
     for i in output.index:
         for j in range(len(output.loc[i, "Traceroute"])):
-            try:
-                if len(verify_check[0]) <= j:
-                    verify_check[0].append([output.loc[i, "Traceroute"][j]])
+            # try:
+            if len(verify_check[0]) <= j:
+                verify_check[0].append([output.loc[i, "Traceroute"][j]])
+                if len(output.loc[i, "Delay"]) > j:
                     verify_check[2].append([output.loc[i, "Delay"][j]])
                 else:
-                    already_here = False
+                    verify_check[2].append([0])
+            else:
+                if len(output.loc[i, "Delay"]) > j:
                     verify_check[2][j].append(output.loc[i, "Delay"][j])
-                    if not output.loc[i, "Traceroute"][j] in verify_check[0][j]:
-                        verify_check[0][j].append(output.loc[i, "Traceroute"][j])
-            except:
-                print("Error of some kind inside of create_check")
-                verify_check[0][j].append("0.0.0")
+                if not output.loc[i, "Traceroute"][j] in verify_check[0][j]:
+                    verify_check[0][j].append(output.loc[i, "Traceroute"][j])
+
+            # except:
+            #     print("Error of some kind inside of create_check")
+            #     verify_check[0][j].append("0.0.0")
     for i in range(len(verify_check[2])):
         verify_check[1].append([np.std(verify_check[2][i])])
         verify_check[1][i].append(np.mean(verify_check[2][i]))
@@ -135,46 +141,46 @@ def initialize(start, end, data):
 def verify(data, verify_check):
     traceroute_score = 0.0
     delay_score = 0.0
-    try:
-        try:
-            # finds the shortest list to itterate through so there is no out of bounds errors
-            if len(data["Traceroute"]) <= len(verify_check[0]):
-                try:
-                    for i in range(len(data["Traceroute"])):
-                        # Checks every datapoint in Traceroute to see if it is in verify check. If it is in the exact same place, give it a higher score
-                        try:
-                            if data.iat[0, 0][i] in verify_check[0][i]:
-                                traceroute_score += 2
-                            elif data.iat[0, 0][i] in verify_check[0]:
-                                traceroute_score += 1
-                        except:
-                            print("Error accessing data")
-                            print("\tdata.iat[0, 0][i]")
-                            print("\t", data.iat[0, 0][i])
-                            return "One"
-                except:
-                    print("Error in the first for loop")
-        except:
-            print("Error in first if statement")
-            return "One"
-        else:
-            for i in range(len(verify_check[0])):
-                # Does the same thing as the if statement, just not going out of bounds. I am not convinced this redundancy is nessisary, however I put it in here because I was having problems
-                try:
-                    if data.iat[0, 0][i] in verify_check[0][i]:
-                        traceroute_score += 1
-                    elif data.iat[0, 0][i] in verify_check[0]:
-                        traceroute_score += 0.5
-                except:
-                    print("Error accessing data in else")
-                    print("\tdata.iat[0, 0] i =", i)
-                    print("\t", data)
-                    print("\tverify_check[0][i]")
-                    print("\t", verify_check[0])
-                    return "One"
-    except:
-        print("Error comparing traceroute data")
-        return "One"  # Whenever I return something weird here, it is to triger an error where this is called so it will exit the for loop and continue on it's merry way. This is specifically because I was having troubles finding where my error messages were coming from
+    # try:
+    #     try:
+    # finds the shortest list to itterate through so there is no out of bounds errors
+    if len(data["Traceroute"]) <= len(verify_check[0]):
+        # try:
+        for i in range(len(data["Traceroute"])):
+            # Checks every datapoint in Traceroute to see if it is in verify check. If it is in the exact same place, give it a higher score
+            # try:
+            if data.iat[0, 0][i] in verify_check[0][i]:
+                traceroute_score += 2
+            elif data.iat[0, 0][i] in verify_check[0]:
+                traceroute_score += 1
+        #                 except:
+        #                     print("Error accessing data")
+        #                     print("\tdata.iat[0, 0][i]")
+        #                     print("\t", data.iat[0, 0][i])
+        #                     return "One"
+        #         except:
+        #             print("Error in the first for loop")
+        # except:
+        #     print("Error in first if statement")
+        #     return "One"
+    else:
+        for i in range(len(verify_check[0])):
+            # Does the same thing as the if statement, just not going out of bounds. I am not convinced this redundancy is nessisary, however I put it in here because I was having problems
+            # try:
+            if data.iat[0, 0][i] in verify_check[0][i]:
+                traceroute_score += 1
+            elif data.iat[0, 0][i] in verify_check[0]:
+                traceroute_score += 0.5
+    #             except:
+    #                 print("Error accessing data in else")
+    #                 print("\tdata.iat[0, 0] i =", i)
+    #                 print("\t", data)
+    #                 print("\tverify_check[0][i]")
+    #                 print("\t", verify_check[0])
+    #                 return "One"
+    # except:
+    #     print("Error comparing traceroute data")
+    #     return "One"  # Whenever I return something weird here, it is to triger an error where this is called so it will exit the for loop and continue on it's merry way. This is specifically because I was having troubles finding where my error messages were coming from
     try:
         # Checks to see if the delay we have gotten is within 2 standard deveations of the verify_check data
         # Once again there is the length redudnancy because I am having mysterious errors sometimes
@@ -217,13 +223,13 @@ def test(data):
 
 
 def update_variables(new_data, identified_data, verified_data, verify_check):
-    try:
-        # Checks to see if the new data it true or not
-        new_data["Truth"] = verify(new_data, verify_check)
-    except:
-        # Returns an invalid output so it will triger the try catch variable in the main code
-        print("Error verifying at:")
-        return 0
+    # try:
+    # Checks to see if the new data it true or not
+    new_data["Truth"] = verify(new_data, verify_check)
+    # except:
+    #     # Returns an invalid output so it will triger the try catch variable in the main code
+    #     print("Error verifying at:")
+    #     return 0
     # Adds the newly identifed data to the end of identified_data
     identified_data = pd.concat([identified_data, new_data], ignore_index=True)
     # Wait for the buffer to be 50 and then pop the first datapoint in identifed_data. If it is good data then append it to verifyed_data, otherwise get rid of it
