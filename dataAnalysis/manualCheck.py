@@ -3,7 +3,6 @@ from resources import (
     initialize,
     verify,
     test,
-    create_check,
     update_variables,
 )
 import pandas as pd
@@ -20,7 +19,7 @@ data = []
 # Parses all of the data and puts it in a variable called data
 for i in input_strings:
     print("Parsing:", i)
-    data.append(parse_data(i))
+    data.append(parse_data(i, 5, True))
 
 # Inside this for loop we go though each of the IP addresses and first check it against itself and then check against every other IP address in the list
 for true_dataframe in range(len(data)):
@@ -46,10 +45,6 @@ for true_dataframe in range(len(data)):
             verify_check,
             len_identified_data,
         )
-        # print("Error at line:", j)
-        # total_errors += 1
-        # continue
-        # Test returns true if more than 75% of the datapoints in identified_data were previously determined to be true
         current_test = test(identified_data)
         if current_test:
             total_true += 1
@@ -85,27 +80,13 @@ for true_dataframe in range(len(data)):
             print("\tChecking against:", input_strings[false_dataframe])
             # itterates through every line in the IP address in the same way as before
             for j in data[false_dataframe][end + 1 :].index:
-                # try:
                 data[false_dataframe].take([j], axis=0)
-                # except:
-                #     print("Dataframe")
-                #     print(data[false_dataframe])
-                #     print(
-                #         "if this doesn't print it's false_dataframe that is out of bounds, not j. Which would make a lot of sense. but also not"
-                #     )
-                #     print(f"length of dataframe = {len(data[false_dataframe])}")
-                #     print(f"\nj = {j}\n\n")
                 identified_data = update_variables(
                     data[false_dataframe].take([j], axis=0),
                     identified_data,
                     verify_check,
                     len_identified_data,
                 )
-                # except:
-                #     print("\t\tline:", j)
-                #     total_errors += 1
-                #     current_errors += 1
-                #     continue
                 current_test = test(identified_data)
                 if current_test:
                     total_true += 1
