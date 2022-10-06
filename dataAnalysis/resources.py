@@ -94,7 +94,7 @@ def parse_data(target):
             row_to_drop.append(index)
     data = data.drop(row_to_drop, axis=0)
     data = data.reset_index(drop=True)
-    print(data)
+    # print(data)
     return data
 
 
@@ -213,16 +213,20 @@ def verify(data, verify_check):
 def test(data):
     # If more than 75% of the data is true than return true
     score = 0
-    for i in data.index:
-        if data.loc[i, "Truth"]:
-            score += 1
-    if score / len(data) > 0.75:
-        return True
-    else:
+    try:
+        for i in data.index:
+            if data.loc[i, "Truth"]:
+                score += 1
+        if score / len(data) > 0.75:
+            return True
+        else:
+            return False
+    except:
+        print(data)
         return False
 
 
-def update_variables(new_data, identified_data, verified_data, verify_check):
+def update_variables(new_data, identified_data, verify_check, len_identified_data):
     # try:
     # Checks to see if the new data it true or not
     new_data["Truth"] = verify(new_data, verify_check)
@@ -233,16 +237,6 @@ def update_variables(new_data, identified_data, verified_data, verify_check):
     # Adds the newly identifed data to the end of identified_data
     identified_data = pd.concat([identified_data, new_data], ignore_index=True)
     # Wait for the buffer to be 50 and then pop the first datapoint in identifed_data. If it is good data then append it to verifyed_data, otherwise get rid of it
-    if len(identified_data) >= 50:
-        if identified_data.iat[0, 2]:
-            verified_data = pd.concat(
-                [
-                    verified_data,
-                    identified_data.take([0], axis=0).drop("Truth", axis=1),
-                ],
-                ignore_index=True,
-            )
-            verified_data = verified_data.drop(0, axis=0)
-            verify_check = create_check(verified_data)
+    if len(identified_data) >= len_identified_data:
         identified_data = identified_data.drop(0, axis=0)
-    return identified_data, verified_data, verify_check
+    return identified_data
