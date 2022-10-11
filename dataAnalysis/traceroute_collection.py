@@ -37,9 +37,9 @@ def gap_detected(id, timestamp1, timestamp2, testing_false_data):
         true_end = length_of_true_data
     # true_end = length_of_true_data  # just for testing purposes, I would do more math if this was actually implemented
 
-    # TODO: rest of the math to convert the actual differance of the timestamps to lines
-    differance = int(timestamp2 - timestamp1)
-    differance = 20  # just for testing purposes
+    differance = int(
+        (timestamp2 - timestamp1) / (60 * 10)
+    )  # 60 seconds / minute and 10 minutes / data sample
     # uses different methods for finding the begining of the testing data for different use cases
     if testing_false_data:
         for i in IP_untested_df.index:
