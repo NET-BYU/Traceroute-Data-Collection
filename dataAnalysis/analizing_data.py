@@ -2,9 +2,9 @@ import data_manipulation
 from loguru import logger
 
 
-def detection(id1, id2, t1, t2, truth):
+def detection(id1, id2, t1, t2):
     # when doing in real time pause while traceroute collects data
-    testing1, testing2 = data_manipulation.gap_detected(id1, id2, t1, t2, truth)
+    testing1, testing2 = data_manipulation.gap_detected(id1, id2, t1, t2)
     score = traceroute_analysis(testing1, testing2)
     # Score will show how many trigered true of false. If we are checking for true values that is the accuracy. If we are checking against false data we have to invert the score. (score = 0 means that it was 100% accurate)
     return score
@@ -12,8 +12,8 @@ def detection(id1, id2, t1, t2, truth):
 
 # Parses all of the data and puts it in a variable called data
 def traceroute_analysis(good_data, unverified_data):
-    good_data = data_manipulation.trim_dataframe(good_data, 6)
-    unverified_data = data_manipulation.trim_dataframe(unverified_data, 6)
+    good_data = data_manipulation.process_dataframe(good_data, 6)
+    unverified_data = data_manipulation.process_dataframe(unverified_data, 6)
     verify_check = data_manipulation.create_check(good_data)
     verified_data = []
     total_true = 0
@@ -21,7 +21,6 @@ def traceroute_analysis(good_data, unverified_data):
         verified_data.append(verify(unverified_data.take([i], axis=0), verify_check))
         total_true += verified_data[i]
     reliability_percent = total_true / len(verified_data)
-
     return reliability_percent
 
 
