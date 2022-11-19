@@ -28,22 +28,15 @@ def verify(data, verify_check):
     if len(data.iat[0, 0]) <= len(verify_check[0]):
         for i in range(len(data.iat[0, 0])):
             # Checks every datapoint in Traceroute to see if it is in verify check. If it is in the exact same place, give it a higher score
-            # print("this is data:")
-            # print(data.iat[0, 0])
-            # print("This is length of traceroute:")
-            # print(len(data.iat[0, 0]))
             if data.iat[0, 0][i] in verify_check[0][i]:
-                # print(data.iat[0, 0][i])
                 traceroute_score += 1
-            # elif data.iat[0, 0][i] in verify_check[0]:
-            #     traceroute_score += 1
     else:
         for i in range(len(verify_check[0])):
             # Does the same thing as the if statement, just not going out of bounds. I am not convinced this redundancy is nessisary, however I put it in here because I was having problems
             if data.iat[0, 0][i] in verify_check[0][i]:
                 traceroute_score += 1
-            # elif data.iat[0, 0][i] in verify_check[0]:
-            #     traceroute_score += 1
+
+    # This entire section is using latency measurements as a factor in the evaluation
     # try:
     # Checks to see if the delay we have gotten is within 1 standard deveations of the verify_check data
     # Once again there is the length redudnancy because I am having mysterious errors sometimes
@@ -69,10 +62,5 @@ def verify(data, verify_check):
     #     return "Two"
     total_score = traceroute_score / len(
         data.iat[0, 0]
-    )  # * 0.8 + (delay_score / len(data)) * 0.2
+    )  # * 0.8 + (delay_score / len(data.iat[0, 0])) * 0.2                #This makes the IP addresses worth 80% of the total score and the delay data worth 20% of the total score
     return total_score
-    # logger.debug("total_score:", total_score)
-    # if total_score >= 0.75:
-    #     return True
-    # else:
-    #     return False

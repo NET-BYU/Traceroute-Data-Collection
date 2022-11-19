@@ -1,10 +1,6 @@
-import numbers
 from venv import create
 import pandas as pd
 import numpy as np
-import json
-import os
-import time
 from loguru import logger
 
 
@@ -95,7 +91,6 @@ def parse_data(target, len_of_IP, text_file):
             row_to_drop.append(index)
     data = data.drop(row_to_drop, axis=0)
     data = data.reset_index(drop=True)
-    # logger.debug(data)
     return data
 
 
@@ -105,7 +100,6 @@ def create_check(output):
     verify_check = [[], [], []]
     for i in output.index:
         for j in range(len(output.loc[i, "Traceroute"])):
-            # try:
             if len(verify_check[0]) <= j:
                 verify_check[0].append([output.loc[i, "Traceroute"][j]])
                 if len(output.loc[i, "Delay"]) > j:
@@ -117,10 +111,6 @@ def create_check(output):
                     verify_check[2][j].append(output.loc[i, "Delay"][j])
                 if not output.loc[i, "Traceroute"][j] in verify_check[0][j]:
                     verify_check[0][j].append(output.loc[i, "Traceroute"][j])
-
-            # except:
-            #     logger.debug("Error of some kind inside of create_check")
-            #     verify_check[0][j].append("0.0.0")
     for i in range(len(verify_check[2])):
         verify_check[1].append([np.std(verify_check[2][i])])
         verify_check[1][i].append(np.mean(verify_check[2][i]))
@@ -156,13 +146,8 @@ def test(data):
 
 
 def update_variables(new_data, identified_data, verify_check, len_identified_data):
-    # try:
     # Checks to see if the new data it true or not
     new_data["Truth"] = verify(new_data, verify_check)
-    # except:
-    #     # Returns an invalid output so it will triger the try catch variable in the main code
-    #     logger.debug("Error verifying at:")
-    #     return 0
     # Adds the newly identifed data to the end of identified_data
     identified_data = pd.concat([identified_data, new_data], ignore_index=True)
     # Wait for the buffer to be 50 and then pop the first datapoint in identifed_data. If it is good data then append it to verifyed_data, otherwise get rid of it

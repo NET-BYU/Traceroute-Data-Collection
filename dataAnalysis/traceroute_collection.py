@@ -2,8 +2,6 @@ from traceroute_resources import parse_data
 import pandas as pd
 from loguru import logger
 
-# IP_true_file = "24.49.163.147"
-# IP_false_file = "50.243.6.69"
 path_to_data = "/home/carter/Research/Traceroute-Data-Collection/Outputs/"
 length_of_true_data = (
     1008  # 7 days.     1 day = 1440 minutes      (1440 * 7) / 10 = 1008
@@ -89,6 +87,4 @@ def gap_detected(id_T, id_F, timestamp1, timestamp2, testing_data_type):
     # removing the time collum from both because we don't want it in the output
     IP_true_df = IP_true_df.drop(["Time"], axis=1)
     IP_untested_df = IP_untested_df.drop(["Time"], axis=1)
-    # logger.debug(f"\t\t\t\t\ttested[{true_start}:{true_end}]")
-    # logger.debug(f"\t\t\t\t\tuntested[{untested_start}:{untested_end}]")
     return IP_true_df, IP_untested_df
