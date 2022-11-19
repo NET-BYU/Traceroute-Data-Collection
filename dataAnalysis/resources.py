@@ -2,6 +2,9 @@ from venv import create
 import pandas as pd
 import numpy as np
 from loguru import logger
+from traceroute_resources import (
+    verify,
+)
 
 
 def parse_data(target, len_of_IP, text_file):
