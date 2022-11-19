@@ -1,49 +1,45 @@
-import pandas as pd
-import numpy as np
+import data_manipulation
 from loguru import logger
 
 
-def parse_data(
-    target,
-):
-    # Takes the data from a txt file and parses it into a pandas dataframe in a way that will be recognizable by the machine learning algorithm
-    data = pd.read_csv(
-        f"Outputs/{target}.txt",
-        sep="\t",
-        parse_dates=True,
-        infer_datetime_format=True,
-        names=["Time", "TTL", "Traceroute", "Delay", "Latency"],
-    )
+def detection(id1, id2, t1, t2, truth):
+    # when doing in real time pause while traceroute collects data
+    testing1, testing2 = data_manipulation.gap_detected(id1, id2, t1, t2, truth)
+    score = traceroute_analysis(testing1, testing2)
+    # Score will show how many trigered true of false. If we are checking for true values that is the accuracy. If we are checking against false data we have to invert the score. (score = 0 means that it was 100% accurate)
+    return score
 
-    data = data.drop(["TTL", "Latency"], axis=1)
 
-    data["Traceroute"] = data["Traceroute"].str.split(" ")
-    data["Delay"] = data["Delay"].str.split(" ")
-    return data
+# Parses all of the data and puts it in a variable called data
+def traceroute_analysis(good_data, unverified_data):
+    good_data = data_manipulation.trim_dataframe(good_data, 6)
+    unverified_data = data_manipulation.trim_dataframe(unverified_data, 6)
+    verify_check = data_manipulation.create_check(good_data)
+    verified_data = []
+    total_true = 0
+    for i in unverified_data.index:
+        verified_data.append(verify(unverified_data.take([i], axis=0), verify_check))
+        total_true += verified_data[i]
+    reliability_percent = total_true / len(verified_data)
+
+    return reliability_percent
 
 
 def verify(data, verify_check):
     traceroute_score = 0.0
-    delay_score = 0.0
+    # delay_score = 0.0
     if len(data.iat[0, 0]) <= len(verify_check[0]):
         for i in range(len(data.iat[0, 0])):
             # Checks every datapoint in Traceroute to see if it is in verify check. If it is in the exact same place, give it a higher score
-            # print("this is data:")
-            # print(data.iat[0, 0])
-            # print("This is length of traceroute:")
-            # print(len(data.iat[0, 0]))
             if data.iat[0, 0][i] in verify_check[0][i]:
-                # print(data.iat[0, 0][i])
                 traceroute_score += 1
-            # elif data.iat[0, 0][i] in verify_check[0]:
-            #     traceroute_score += 1
     else:
         for i in range(len(verify_check[0])):
             # Does the same thing as the if statement, just not going out of bounds. I am not convinced this redundancy is nessisary, however I put it in here because I was having problems
             if data.iat[0, 0][i] in verify_check[0][i]:
                 traceroute_score += 1
-            # elif data.iat[0, 0][i] in verify_check[0]:
-            #     traceroute_score += 1
+
+    # This entire section is using latency measurements as a factor in the evaluation
     # try:
     # Checks to see if the delay we have gotten is within 1 standard deveations of the verify_check data
     # Once again there is the length redudnancy because I am having mysterious errors sometimes
@@ -69,10 +65,5 @@ def verify(data, verify_check):
     #     return "Two"
     total_score = traceroute_score / len(
         data.iat[0, 0]
-    )  # * 0.8 + (delay_score / len(data)) * 0.2
+    )  # * 0.8 + (delay_score / len(data.iat[0, 0])) * 0.2                #This makes the IP addresses worth 80% of the total score and the delay data worth 20% of the total score
     return total_score
-    # logger.debug("total_score:", total_score)
-    # if total_score >= 0.75:
-    #     return True
-    # else:
-    #     return False

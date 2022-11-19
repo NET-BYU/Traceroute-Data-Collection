@@ -1,32 +1,34 @@
-import numbers
-from venv import create
 import pandas as pd
 import numpy as np
-import json
-import os
-import time
 from loguru import logger
 
+length_of_true_data = (
+    1008  # 7 days.     1 day = 1440 minutes      (1440 * 7) / 10 = 1008
+)
+seconds_per_week = 604800
 
-def parse_data(target, len_of_IP, text_file):
-    random_list = ["a", "b"]
+
+def dataframe(
+    target,
+):
     # Takes the data from a txt file and parses it into a pandas dataframe in a way that will be recognizable by the machine learning algorithm
-    if text_file:
-        data = pd.read_csv(
-            f"Outputs/{target}.txt",
-            sep="\t",
-            parse_dates=True,
-            infer_datetime_format=True,
-            names=["Time", "TTL", "Traceroute", "Delay", "Latency"],
-        )
+    data = pd.read_csv(
+        f"Outputs/{target}.txt",
+        sep="\t",
+        parse_dates=True,
+        infer_datetime_format=True,
+        names=["Time", "TTL", "Traceroute", "Delay", "Latency"],
+    )
 
-        data = data.drop(["TTL", "Latency"], axis=1)
+    data = data.drop(["TTL", "Latency"], axis=1)
 
-        data["Traceroute"] = data["Traceroute"].str.split(" ")
-        data["Delay"] = data["Delay"].str.split(" ")
-        logger.debug(data)
-    else:
-        data = target
+    data["Traceroute"] = data["Traceroute"].str.split(" ")
+    data["Delay"] = data["Delay"].str.split(" ")
+    return data
+
+
+def trim_dataframe(data, len_of_IP):
+    random_list = ["a", "b"]
     row_to_drop = []
     for index in data.index:
         if type(data.loc[index, "Traceroute"]) == type(random_list):
@@ -91,12 +93,91 @@ def parse_data(target, len_of_IP, text_file):
             for delay in reduced_delay:
                 data.loc[index, "Delay"].append(float(delay))
         else:
-            logger.debug(f"Error at line {index} at {target}.txt")
+            logger.debug(f"Error in data_manipulation.trim_dataframe")
             row_to_drop.append(index)
     data = data.drop(row_to_drop, axis=0)
     data = data.reset_index(drop=True)
-    # logger.debug(data)
     return data
+
+
+def gap_detected(id_T, id_F, timestamp1, timestamp2, testing_data_type):
+    # getting the data from the text files and throwing them in some dataframes
+    IP_true_df = dataframe(id_T)
+    IP_false_df = dataframe(id_F)
+    if testing_data_type:
+        id_Q = id_T
+    else:
+        id_Q = id_F
+    if testing_data_type:
+        IP_untested_df = IP_true_df.copy()
+    else:
+        IP_untested_df = IP_false_df.copy()
+
+    # here is where I convert the times with the timestamps to lines in the data
+    # the true_* and untested_* variables are meant to be index numbers in either
+
+    # this only works well if we have more than a weeks worth of data before timestamp1
+    for index, row in IP_true_df.iterrows():
+        if row["Time"] > timestamp1 - seconds_per_week:
+            true_start = index - 1
+            break
+    for index, row in IP_true_df.iterrows():
+        if row["Time"] > timestamp1:
+            true_end = index - 1
+            break
+
+        # If the time we get is to close to the begining of the file, then automatically just take the data from the beginning of the program
+        # Lets us know about and fixes any out of bounds errors that are likley to happen
+    if true_end < 0:
+        logger.debug(
+            f"WARNING - traceroute_collection.py\n\t Timestamp pre-dates the creation of {id_T}.txt."
+        )
+        true_end = length_of_true_data
+    elif true_start < 0:
+
+        logger.debug(
+            f"WARNING - traceroute_collection.py:\n\t Asking for data that pre-dates the creaton of {id_T}.txt."
+        )
+        true_start = 0
+
+    # Finding the start and end times for the untested data
+    for index, row in IP_untested_df.iterrows():
+        if row["Time"] > timestamp2:
+            untested_start = index - 1
+            break
+    for index, row in IP_untested_df.iterrows():
+        if row["Time"] > timestamp2 + seconds_per_week:
+            untested_end = index - 1
+            break
+
+        # Making sure that the data is within bounds and throing errors if it isn't
+    if untested_end < 0:
+        logger.debug(
+            f"WARNING - traceroute_collection.py\n\t Timestamp pre-dates the creation of {id_Q}.txt."
+        )
+        untested_end = length_of_true_data
+    elif untested_start < 0:
+        logger.debug(
+            f"WARNING - traceroute_collection.py:\n\t Asking for data that pre-dates the creaton of {id_Q}.txt."
+        )
+        untested_start = 0
+
+    # This trims down IP_untested_df to just the data that we want
+    start_to_drop = [i for i in range(0, untested_start)]
+    end_to_drop = [i for i in range(untested_end, len(IP_untested_df))]
+    data_to_drop = start_to_drop + end_to_drop
+    IP_untested_df = IP_untested_df.drop(data_to_drop, axis=0)
+
+    # this trims down IP_true_df to just the data that we want
+    begining_to_drop = [i for i in range(0, true_start)]
+    end_to_drop = [i for i in range(true_end, len(IP_true_df))]
+    data_to_drop = begining_to_drop + end_to_drop
+    IP_true_df = IP_true_df.drop(data_to_drop, axis=0)
+
+    # removing the time collum from both because we don't want it in the output
+    IP_true_df = IP_true_df.drop(["Time"], axis=1)
+    IP_untested_df = IP_untested_df.drop(["Time"], axis=1)
+    return IP_true_df, IP_untested_df
 
 
 def create_check(output):
@@ -105,7 +186,6 @@ def create_check(output):
     verify_check = [[], [], []]
     for i in output.index:
         for j in range(len(output.loc[i, "Traceroute"])):
-            # try:
             if len(verify_check[0]) <= j:
                 verify_check[0].append([output.loc[i, "Traceroute"][j]])
                 if len(output.loc[i, "Delay"]) > j:
@@ -117,55 +197,8 @@ def create_check(output):
                     verify_check[2][j].append(output.loc[i, "Delay"][j])
                 if not output.loc[i, "Traceroute"][j] in verify_check[0][j]:
                     verify_check[0][j].append(output.loc[i, "Traceroute"][j])
-
-            # except:
-            #     logger.debug("Error of some kind inside of create_check")
-            #     verify_check[0][j].append("0.0.0")
     for i in range(len(verify_check[2])):
         verify_check[1].append([np.std(verify_check[2][i])])
         verify_check[1][i].append(np.mean(verify_check[2][i]))
     del verify_check[2]
     return verify_check
-
-
-def initialize(start, end, data):
-    # Assumes all of the values in data[start : end] are true values and uses them to create the first intance of verify_check and verified_data
-    column_user = list(data)
-    output = pd.DataFrame(
-        np.zeros(((end - start), len(column_user))), dtype=str, columns=column_user
-    )
-    output[: (end - start)] = data[start:end]
-    verify_check = create_check(output)
-    return output, verify_check
-
-
-def test(data):
-    # If more than 75% of the data is true than return true
-    score = 0
-    try:
-        for i in data.index:
-            if data.loc[i, "Truth"]:
-                score += 1
-        if score / len(data) > 0.75:
-            return True
-        else:
-            return False
-    except:
-        logger.debug(data)
-        return False
-
-
-def update_variables(new_data, identified_data, verify_check, len_identified_data):
-    # try:
-    # Checks to see if the new data it true or not
-    new_data["Truth"] = verify(new_data, verify_check)
-    # except:
-    #     # Returns an invalid output so it will triger the try catch variable in the main code
-    #     logger.debug("Error verifying at:")
-    #     return 0
-    # Adds the newly identifed data to the end of identified_data
-    identified_data = pd.concat([identified_data, new_data], ignore_index=True)
-    # Wait for the buffer to be 50 and then pop the first datapoint in identifed_data. If it is good data then append it to verifyed_data, otherwise get rid of it
-    if len(identified_data) >= len_identified_data:
-        identified_data = identified_data.drop(0, axis=0)
-    return identified_data
