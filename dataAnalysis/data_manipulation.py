@@ -27,7 +27,7 @@ def dataframe(
     return data
 
 
-def trim_dataframe(data, len_of_IP):
+def process_dataframe(data, len_of_IP):
     random_list = ["a", "b"]
     row_to_drop = []
     for index in data.index:
@@ -100,83 +100,68 @@ def trim_dataframe(data, len_of_IP):
     return data
 
 
-def gap_detected(id_T, id_F, timestamp1, timestamp2, testing_data_type):
-    # getting the data from the text files and throwing them in some dataframes
-    IP_true_df = dataframe(id_T)
-    IP_false_df = dataframe(id_F)
-    if testing_data_type:
-        id_Q = id_T
-    else:
-        id_Q = id_F
-    if testing_data_type:
-        IP_untested_df = IP_true_df.copy()
-    else:
-        IP_untested_df = IP_false_df.copy()
-
+def trim_dataframe(df, timestamp1, timestamp2):
     # here is where I convert the times with the timestamps to lines in the data
-    # the true_* and untested_* variables are meant to be index numbers in either
+    if timestamp1 > timestamp2:
+        logger.debug(
+            f"WARNING - data_manipulation.py\n\t Timestamp1 is after Timestamp2. Switching the two."
+        )
+        return trim_dataframe(df, timestamp2, timestamp1)
+    if timestamp1 == timestamp2:
+        logger.debug(
+            f"WARNING - data_manipulation.py\n\t Timestamp1 = Timestamp2. Adding a week to Timestamp2."
+        )
+        return trim_dataframe(df, timestamp1, timestamp2 + seconds_per_week / 7)
 
-    # this only works well if we have more than a weeks worth of data before timestamp1
-    for index, row in IP_true_df.iterrows():
-        if row["Time"] > timestamp1 - seconds_per_week:
-            true_start = index - 1
-            break
-    for index, row in IP_true_df.iterrows():
+    # the start and end variables are meant to be index numbers in df
+    start = 0
+    end = 0
+    for index, row in df.iterrows():
         if row["Time"] > timestamp1:
-            true_end = index - 1
+            start = index - 1
+            break
+    for index, row in df.iterrows():
+        if row["Time"] > timestamp2:
+            end = index
             break
 
         # If the time we get is to close to the begining of the file, then automatically just take the data from the beginning of the program
-        # Lets us know about and fixes any out of bounds errors that are likley to happen
-    if true_end < 0:
+    # Lets us know about and fixes any out of bounds errors that are likley to happen
+    if end <= 0:
         logger.debug(
-            f"WARNING - traceroute_collection.py\n\t Timestamp pre-dates the creation of {id_T}.txt."
+            f"WARNING - data_manipulation.py\n\t Timestamp1 and Timestamp2 pre-date the creation of the file."
         )
-        true_end = length_of_true_data
-    elif true_start < 0:
-
+        end = 0
+    elif start < 0:
         logger.debug(
-            f"WARNING - traceroute_collection.py:\n\t Asking for data that pre-dates the creaton of {id_T}.txt."
+            f"WARNING - data_manipulation.py:\n\t Timestamp1 pre-dates the creaton of the file."
         )
-        true_start = 0
+        start = 0
 
-    # Finding the start and end times for the untested data
-    for index, row in IP_untested_df.iterrows():
-        if row["Time"] > timestamp2:
-            untested_start = index - 1
-            break
-    for index, row in IP_untested_df.iterrows():
-        if row["Time"] > timestamp2 + seconds_per_week:
-            untested_end = index - 1
-            break
-
-        # Making sure that the data is within bounds and throing errors if it isn't
-    if untested_end < 0:
-        logger.debug(
-            f"WARNING - traceroute_collection.py\n\t Timestamp pre-dates the creation of {id_Q}.txt."
-        )
-        untested_end = length_of_true_data
-    elif untested_start < 0:
-        logger.debug(
-            f"WARNING - traceroute_collection.py:\n\t Asking for data that pre-dates the creaton of {id_Q}.txt."
-        )
-        untested_start = 0
-
-    # This trims down IP_untested_df to just the data that we want
-    start_to_drop = [i for i in range(0, untested_start)]
-    end_to_drop = [i for i in range(untested_end, len(IP_untested_df))]
+    # trims down IP_untested_df to just the data that we want
+    start_to_drop = [i for i in range(0, start)]
+    end_to_drop = [i for i in range(end, len(df))]
     data_to_drop = start_to_drop + end_to_drop
-    IP_untested_df = IP_untested_df.drop(data_to_drop, axis=0)
+    df = df.drop(data_to_drop, axis=0)
 
-    # this trims down IP_true_df to just the data that we want
-    begining_to_drop = [i for i in range(0, true_start)]
-    end_to_drop = [i for i in range(true_end, len(IP_true_df))]
-    data_to_drop = begining_to_drop + end_to_drop
-    IP_true_df = IP_true_df.drop(data_to_drop, axis=0)
+    # Trims off the time collumn
+    df = df.drop(["Time"], axis=1)
+    return df
 
-    # removing the time collum from both because we don't want it in the output
-    IP_true_df = IP_true_df.drop(["Time"], axis=1)
-    IP_untested_df = IP_untested_df.drop(["Time"], axis=1)
+
+# When there has been a gap from time timestamp1 to timestamp2 this takes the last weeks's worth of data from id_T and the next week's worth of data from id_Q. Puts them into dataframes, trims, and processes them
+def gap_detected(id_T, id_Q, timestamp1, timestamp2):
+    # getting the data from the text files and throwing them in some dataframes
+    IP_true_df = dataframe(id_T)
+    IP_untested_df = dataframe(id_Q)
+    # finding just the dat within the timeframe that we want
+    IP_true_df = trim_dataframe(IP_true_df, timestamp1 - seconds_per_week, timestamp1)
+    IP_untested_df = trim_dataframe(
+        IP_untested_df, timestamp2, timestamp2 + seconds_per_week
+    )
+    # Fromating and getting rid of un nessisary data
+    IP_true_df = process_dataframe(IP_true_df, 5)
+    IP_untested_df = process_dataframe(IP_untested_df, 5)
     return IP_true_df, IP_untested_df
 
 

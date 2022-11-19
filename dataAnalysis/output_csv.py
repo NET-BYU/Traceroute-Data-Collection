@@ -28,7 +28,7 @@ for good_traceroute in IPADR:
             this.write(str(current_time))
             for test in IPADR:
                 value = analizing_data.detection(
-                    good_traceroute, test, current_time, current_time, False
+                    good_traceroute, test, current_time, current_time
                 )
                 this.write(f", {value * 100}")
             this.write("\n")
