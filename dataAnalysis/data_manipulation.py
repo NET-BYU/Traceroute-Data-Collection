@@ -8,23 +8,54 @@ length_of_true_data = (
 seconds_per_week = 604800
 
 
-def dataframe(
-    target,
-):
+def convert_traceroute(route, total_hops=5):
+    route = route.split(" ")
+
+    # Filter out empty hops
+    route = [hop for hop in route if hop != ""]
+
+    # TODO: Do something with stars?
+
+    # Limit number of hops
+    route = route[-total_hops:]
+
+    return route
+
+
+def dataframe(target, start):
     # Takes the data from a txt file and parses it into a pandas dataframe in a way that will be recognizable by the machine learning algorithm
     data = pd.read_csv(
         f"Outputs/{target}.txt",
         sep="\t",
-        parse_dates=True,
-        infer_datetime_format=True,
+        index_col=0,
         names=["Time", "TTL", "Traceroute", "Delay", "Latency"],
+        converters={"Traceroute": convert_traceroute},
     )
 
-    data = data.drop(["TTL", "Latency"], axis=1)
+    # Drop some data we don't need
+    data = data.drop(["TTL", "Latency", "Delay"], axis=1)
+
+    print(data)
+    exit()
+
+    # Convert index into date time
+    data.index = pd.to_datetime(data.index, unit="s", utc=True).tz_convert(
+        tz="US/Mountain"
+    )
+
+    # Filter data by specific start time
+    data = data[start:]
 
     data["Traceroute"] = data["Traceroute"].str.split(" ")
-    data["Delay"] = data["Delay"].str.split(" ")
-    return data
+
+    # # Clean up trace route data
+    # print(data["Traceroute"])
+    # exit()
+
+    # Group by 7 day chunks
+    groups = data.groupby([pd.Grouper(freq="7D")])
+
+    return groups
 
 
 def process_dataframe(data, len_of_IP):
@@ -150,15 +181,7 @@ def trim_dataframe(df, timestamp1, timestamp2):
 
 
 # When there has been a gap from time timestamp1 to timestamp2 this takes the last weeks's worth of data from id_T and the next week's worth of data from id_Q. Puts them into dataframes, trims, and processes them
-def gap_detected(id_T, id_Q, timestamp1, timestamp2):
-    # getting the data from the text files and throwing them in some dataframes
-    IP_true_df = dataframe(id_T)
-    IP_untested_df = dataframe(id_Q)
-    # finding just the dat within the timeframe that we want
-    IP_true_df = trim_dataframe(IP_true_df, timestamp1 - seconds_per_week, timestamp1)
-    IP_untested_df = trim_dataframe(
-        IP_untested_df, timestamp2, timestamp2 + seconds_per_week
-    )
+def gap_detected(IP_true_df, IP_untested_df, timestamp1, timestamp2):
     # Fromating and getting rid of un nessisary data
     IP_true_df = process_dataframe(IP_true_df, 5)
     IP_untested_df = process_dataframe(IP_untested_df, 5)
