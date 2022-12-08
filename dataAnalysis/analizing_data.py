@@ -20,7 +20,7 @@ def traceroute_analysis(good_data, unverified_data):
     ]
 
     # TODO: Is this the right length to be dividing by?
-    return sum(total_score) / len(total_score)
+    return (sum(total_score) / len(total_score)) * 100
 
 
 def verify(data, verify_check):

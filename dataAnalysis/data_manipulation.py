@@ -56,8 +56,6 @@ def dataframe(target, start):
     # Filter data by specific start time
     data = data[start:]
 
-    # Filter out empty data
-
     # Group by 7 day chunks
     groups = data.groupby([pd.Grouper(freq="7D")])
 
