@@ -11,13 +11,23 @@ seconds_per_week = 604800
 def convert_traceroute(route, total_hops=5):
     route = route.split(" ")
 
-    # Filter out empty hops
-    route = [hop for hop in route if hop != ""]
+    # Filter out empty hops and stars
+    route = [hop for hop in route if hop not in ("", "*")]
 
-    # TODO: Do something with stars?
+    # TODO: Only remove stars at the end of the route
+
+    # Remove last byte of IP address
+    route = [hop.rsplit(".", 1)[0] for hop in route]
 
     # Limit number of hops
     route = route[-total_hops:]
+
+    # Convert to tuples so the route is hashable
+    route = tuple(route)
+
+    # Remove empty routes
+    if len(route) == 0:
+        return np.NaN
 
     return route
 
@@ -35,8 +45,8 @@ def dataframe(target, start):
     # Drop some data we don't need
     data = data.drop(["TTL", "Latency", "Delay"], axis=1)
 
-    print(data)
-    exit()
+    # Remove any NaNs. These mean that there was no routes listed in the CSV file
+    data = data.dropna()
 
     # Convert index into date time
     data.index = pd.to_datetime(data.index, unit="s", utc=True).tz_convert(
@@ -46,11 +56,7 @@ def dataframe(target, start):
     # Filter data by specific start time
     data = data[start:]
 
-    data["Traceroute"] = data["Traceroute"].str.split(" ")
-
-    # # Clean up trace route data
-    # print(data["Traceroute"])
-    # exit()
+    # Filter out empty data
 
     # Group by 7 day chunks
     groups = data.groupby([pd.Grouper(freq="7D")])
@@ -186,27 +192,3 @@ def gap_detected(IP_true_df, IP_untested_df, timestamp1, timestamp2):
     IP_true_df = process_dataframe(IP_true_df, 5)
     IP_untested_df = process_dataframe(IP_untested_df, 5)
     return IP_true_df, IP_untested_df
-
-
-def create_check(output):
-    # Takes a list of true inputs and condences them into a dataframe of unique IP addresses and normal distribution of the delays
-    # Format of verify_check [[[Array of IP Addresses], ... , ['66.219.236']], [[standard deveation, mean], ... , [0.826255166398371, 26.4456]]]
-    verify_check = [[], [], []]
-    for i in output.index:
-        for j in range(len(output.loc[i, "Traceroute"])):
-            if len(verify_check[0]) <= j:
-                verify_check[0].append([output.loc[i, "Traceroute"][j]])
-                if len(output.loc[i, "Delay"]) > j:
-                    verify_check[2].append([output.loc[i, "Delay"][j]])
-                else:
-                    verify_check[2].append([0])
-            else:
-                if len(output.loc[i, "Delay"]) > j:
-                    verify_check[2][j].append(output.loc[i, "Delay"][j])
-                if not output.loc[i, "Traceroute"][j] in verify_check[0][j]:
-                    verify_check[0][j].append(output.loc[i, "Traceroute"][j])
-    for i in range(len(verify_check[2])):
-        verify_check[1].append([np.std(verify_check[2][i])])
-        verify_check[1][i].append(np.mean(verify_check[2][i]))
-    del verify_check[2]
-    return verify_check

@@ -25,7 +25,7 @@ for good_ip, good_data in all_data.items():
 
         groups = list(good_data.groups.keys())
         for true_week_name, questionable_week_name in zip(groups, groups[1:]):
-            score = analizing_data.detection(
+            score = analizing_data.traceroute_analysis(
                 good_data.get_group(true_week_name),
                 test_data.get_group(questionable_week_name),
             )
