@@ -32,10 +32,10 @@ def convert_traceroute(route, total_hops=5):
     return route
 
 
-def dataframe(target, start):
+def dataframe(target, server, start):
     # Takes the data from a txt file and parses it into a pandas dataframe in a way that will be recognizable by the machine learning algorithm
     data = pd.read_csv(
-        f"Outputs/{target}.txt",
+        f"Outputs/{server}/{target}.txt",
         sep="\t",
         index_col=0,
         names=["Time", "TTL", "Traceroute", "Delay", "Latency"],
