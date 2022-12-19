@@ -8,16 +8,17 @@ length_of_true_data = (
 seconds_per_week = 604800
 
 
-def convert_traceroute(route, total_hops=5):
+def convert_traceroute(route, total_hops=3):
     route = route.split(" ")
 
     # Filter out empty hops and stars
-    route = [hop for hop in route if hop not in ("", "*")]
+    # route = [hop for hop in route if hop not in ("", "*")]
+    route = [hop for hop in route if hop not in ("")]
 
     # TODO: Only remove stars at the end of the route
 
     # Remove last byte of IP address
-    route = [hop.rsplit(".", 1)[0] for hop in route]
+    # route = [hop.rsplit(".", 1)[0] for hop in route]
 
     # Limit number of hops
     route = route[-total_hops:]

@@ -9,6 +9,9 @@ from yaml import safe_load
 with open("Input.json", "r") as input_file:
     IPADR = json.load(input_file)
 
+with open("servers.yaml") as f:
+    config = safe_load(f)
+
 
 def load_all_data(ip_addresses, server):
     return {
@@ -17,25 +20,26 @@ def load_all_data(ip_addresses, server):
     }
 
 
-def analyze_data(good_data, test_data, test_ip):
+def analyze_data(good_data, test_data, good_ip, test_ip):
     logger.info(f"\tComparing against {test_ip}...")
 
     results = []
     times = []
     groups = list(good_data.groups.keys())
+    
     for true_week_name, questionable_week_name in zip(groups, groups[1:]):
-        percent = analizing_data.traceroute_analysis(
-            good_data.get_group(true_week_name),
-            test_data.get_group(questionable_week_name),
-        )
+        if config["ISPs"][good_ip] == config["ISPs"][test_ip]:
+            percent = analizing_data.traceroute_analysis(
+                good_data.get_group(true_week_name),
+                test_data.get_group(questionable_week_name),
+            )
+        else:
+            percent = -1
 
         results.append(percent)
         times.append(true_week_name)
 
     return test_ip, pd.Series(results, index=times)
-
-with open("servers.yaml") as f:
-    config = safe_load(f)
 
 hosts = config["servers"]
 north_hosts = config["clients"]["north"]
@@ -54,7 +58,7 @@ for host in hosts:
         logger.info(f"Testing {good_ip}...")
 
         results = dict(
-            analyze_data(good_data, test_data, test_ip)
+            analyze_data(good_data, test_data, good_ip, test_ip)
             for test_ip, test_data in all_data.items()
         )
         # Average all the values in the time period
@@ -62,15 +66,12 @@ for host in hosts:
 
         # Filter out values and only compare them to those in their group
         if good_ip in north_hosts:
-            logger.debug("North")
             results = results[results.index.isin(north_hosts)]
             all_results[host]["north"].append(results)
         elif good_ip in provo_hosts:
-            logger.debug("Provo")
             results = results[results.index.isin(provo_hosts)]
             all_results[host]["provo"].append(results)
         elif good_ip in south_hosts:
-            logger.debug("South")
             results = results[results.index.isin(south_hosts)]
             all_results[host]["south"].append(results)
         else:
@@ -81,5 +82,7 @@ for host in hosts:
 for host in all_results.keys():
     for zone in all_results[host].keys():
         all_results[host][zone] = pd.concat(all_results[host][zone], axis=1)
+        all_results[host][zone].columns = all_results[host][zone].index
+    
 
 print(all_results)
