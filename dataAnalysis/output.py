@@ -76,7 +76,7 @@ for host in hosts:
         else:
             logger.critical("Found IP out of zones!!!")
 
-        results.to_csv(f"Outputs/CSV/{host}/{good_ip}.csv")
+        # results.to_csv(f"Outputs/CSV/{host}/{good_ip}.csv")
 
 for host in all_results.keys():
     for zone in all_results[host].keys():
