@@ -10,4 +10,4 @@ hosts = config["servers"]
 # scp -r netlab@iot.kitras.dev:/home/netlab/Traceroute-Data-Collection/Outputs .
 
 for host in hosts:
-    system('scp -r netlab@"%s:"/home/netlab/Traceroute-Data-Collection/Outputs ./Outputs/"%s"' % (host, host))
+    system('scp -r netlab@"%s:"/home/netlab/Traceroute-Data-Collection/Outputs/* ./Outputs/"%s"' % (host, host))
