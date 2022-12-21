@@ -4,6 +4,7 @@ import data_manipulation
 import analizing_data
 import pandas as pd
 from yaml import safe_load
+from pathlib import Path
 
 
 with open("Input.json", "r") as input_file:
@@ -21,12 +22,12 @@ def load_all_data(ip_addresses, server):
 
 
 def analyze_data(good_data, test_data, good_ip, test_ip):
-    logger.info(f"\tComparing against {test_ip}...")
+    # logger.info(f"\tComparing against {test_ip}...")[]
 
     results = []
     times = []
     groups = list(good_data.groups.keys())
-    
+
     for true_week_name, questionable_week_name in zip(groups, groups[1:]):
         if config["ISPs"][good_ip] == config["ISPs"][test_ip]:
             percent = analizing_data.traceroute_analysis(
@@ -34,12 +35,13 @@ def analyze_data(good_data, test_data, good_ip, test_ip):
                 test_data.get_group(questionable_week_name),
             )
         else:
-            percent = -1
+            percent = 0.0
 
         results.append(percent)
         times.append(true_week_name)
 
     return test_ip, pd.Series(results, index=times)
+
 
 hosts = config["servers"]
 north_hosts = config["clients"]["north"]
@@ -55,7 +57,7 @@ for host in hosts:
     all_results[host]["south"] = []
 
     for good_ip, good_data in all_data.items():
-        logger.info(f"Testing {good_ip}...")
+        logger.info(f"Testing {host} - {good_ip}")
 
         results = dict(
             analyze_data(good_data, test_data, good_ip, test_ip)
@@ -83,6 +85,45 @@ for host in all_results.keys():
     for zone in all_results[host].keys():
         all_results[host][zone] = pd.concat(all_results[host][zone], axis=1)
         all_results[host][zone].columns = all_results[host][zone].index
-    
+north_avg = (
+    all_results["iot.kitras.dev"]["north"]
+    .add(all_results["iot2.kitras.dev"]["north"])
+    .add(all_results["iot3.kitras.dev"]["north"])
+    .div(3)
+)
+provo_avg = (
+    all_results["iot.kitras.dev"]["provo"]
+    .add(all_results["iot2.kitras.dev"]["provo"])
+    .add(all_results["iot3.kitras.dev"]["provo"])
+    .div(3)
+)
+south_avg = (
+    all_results["iot.kitras.dev"]["south"]
+    .add(all_results["iot2.kitras.dev"]["south"])
+    .add(all_results["iot3.kitras.dev"]["south"])
+    .div(3)
+)
 
-print(all_results)
+north_path = Path("Outputs/subfolder/north.csv")
+south_path = Path("Outputs/subfolder/south.csv")
+provo_path = Path("Outputs/subfolder/provo.csv")
+north_path.parent.mkdir(parents=True, exist_ok=True)
+
+north_avg.to_csv(north_path)
+south_avg.to_csv(south_path)
+provo_avg.to_csv(provo_path)
+
+print("\nProvo:")
+print(all_results["iot.kitras.dev"]["provo"])
+print(all_results["iot2.kitras.dev"]["provo"])
+print(all_results["iot3.kitras.dev"]["provo"])
+
+print("\nNorth:")
+print(all_results["iot.kitras.dev"]["north"])
+print(all_results["iot2.kitras.dev"]["north"])
+print(all_results["iot3.kitras.dev"]["north"])
+
+print("\nSouth:")
+print(all_results["iot.kitras.dev"]["south"])
+print(all_results["iot2.kitras.dev"]["south"])
+print(all_results["iot3.kitras.dev"]["south"])
